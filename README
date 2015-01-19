@@ -1,0 +1,44 @@
+sysbackup-amp:
+
+Description:
+------------
+Service for Linux that automatically create, rotate and delete periodis system backups.
+This program will create three types of backups:
+- daily - keep last 31 backups;
+- weekly - keep last 4 backups;
+- monthly - keep all backups.
+
+This program makes copy of root hierarchy to 'sysbackup' subfolder in backup folder.
+After this it makes tgz archive of this copy.
+At every 3rd day of month it will make monthly archive. It will be not automaticly removed.
+At every saturday it will make weekly archive. Only 4 latest will be kept.
+Every day it will make daily archive. Only 31 latest will be kept.
+Notice that making monthly archive, it will not make weekly and daily. The same effect with weekly.
+After archiving, full path to latest archive is stored in file 'sysbackup.latest'
+
+Normally backup folder is excluded from backup. User can specify additional folders.
+
+See manpage sysbackup-amp(8) for more information.
+
+Installation:
+-------------
+cd sysbackup-amp
+make install
+
+It will copy program to /usr/local/bin/sysbackup-amp, cron script to /etc/cron.daily/sysbackup-amp and install man page.
+After installation user may want to change configuration, especially target folder and excludings.
+
+Configuration:
+--------------
+Configuration resides in cron script /etc/cron.daily/sysbackup-amp
+See manpage sysbackup-amp(8) for details.
+
+Default configuration:
+----------------------
+Default cron script executes:
+    sysbackup-amp --quiet --syslog --auto --folder=/var/backups/sysbackup
+witch means:
+- quiet console output,
+- log to syslog,
+- auto daily/weekly/monthly,
+- folder for backup: /var/backup/sysbackup-amp (this folder will be also excluded from making backup)

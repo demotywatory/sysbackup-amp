@@ -1,0 +1,2 @@
+#!/bin/sh
+exec sysbackup-amp --quiet --syslog --auto --multithreaded --folder=/var/backups/sysbackup-amp

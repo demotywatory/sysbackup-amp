@@ -1,0 +1,67 @@
+.TH SYSBACKUP-AMP "8" "January 14, 2015" "sysbackup-amp.sh" "System Administration Commands"
+.SH NAME
+sysbackup-amp \- take regular system backups
+.SH SYNOPSIS
+.B sysbackup-amp
+[\fIoptions\fR] [\fI-l label\fR] \fI<'//' | name \fR[\fIname\fR...]\fI>\fR
+.SH DESCRIPTION
+.B sysbackup-amp
+Automatically creates, rotates, and destroys full system backups. Most recent backup resides in separate folder and .tgz file.
+.SH OPTIONS
+.TP
+\fB\-d\fR, \fB\-\-debug\fR
+Print debugging messages.
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Print the usage message.
+.TP
+\fB\-q\fR, \fB\-\-quiet\fR
+Suppress warnings and notices at the console.
+.TP
+\fB\-n\fR, \fB\-\-dry\-run\fR
+Print actions without actually doing anything.
+.TP
+\fB\-s\fR, \fB\-\-syslog\fR
+Write messages into the system log.
+.TP
+\fB\-v\fR, \fB\-\-verbose\fR
+Print info messages.
+.TP
+\fB\-l\fR, \fB\-\-label\fR=\fILAB\fR
+LAB is usually 'daily', 'weekly', or 'monthly'.
+.TP
+\fB\-p\fR, \fB\-\-prefix\fR=\fIPRE\fR
+PRE is 'zfs\-auto\-snap' by default.
+.TP
+\fB\-f\fR, \fB\-\-folder\fR=\fIFOLD\fR
+Destination folder for backups. System copy will be keep in subfolder \fIPRE\fR
+.TP
+\fB\-k\fR, \fB\-\-keep\fR=\fINUM\fR
+Keep NUM recent backups with specified \fILAB\fR and destroy older.
+.TP
+\fB\-x\fR, \fB\-\-exclude\fR=\fIPRE\fR
+Folder to be omitted by rsync. If not specified use backup folder --folder. If specified use only provided folder. For multiple folders use multiple options.
+.SH EXAMPLES
+Create system copy in current folder.
+.Bd -literal -offset indent -compact
+sysbackup-amp
+.Ed
+Create system backup in specified folder.
+.Bd -literal -offset indent -compact
+sysbackup-amp --folder=/home/bob/backup
+.Ed
+Create system backup in specified folder without /home.
+.Bd -literal -offset indent -compact
+sysbackup-amp --folder=/home/bob/backup --exclude /home
+sysbackup-amp --folder=/backup --exclude /backup --exclude /home
+.Ed
+Create system backup in specified folder with label.
+.Bd -literal -offset indent -compact
+sysbackup-amp --folder=/home/bob/backup --label mybackup
+.Ed
+Create system backup in specified folder with label. Keep only 3 backups with this label.
+.Bd -literal -offset indent -compact
+sysbackup-amp --folder=/home/bob/backup --label mybackup --keep 3
+.Ed
+.SH FILES
+.BR zfs (8)
