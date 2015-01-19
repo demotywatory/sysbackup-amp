@@ -26,7 +26,6 @@ opt_no_rsync=''
 ret_stdout=''
 ret_stderr=''
 
-#rsync_exclude=''
 rsync_exclude="--exclude /dev --exclude /proc --exclude /run --exclude /sys --exclude /tmp"
 rsync_onefs=''
 
@@ -198,57 +197,41 @@ print_log () # level, message, ...
 }
 
 do_run () # [argv]
-{
+{   RC=0
     if [ -n "$opt_dry_run" ]; then
         print_log info "Dry run: ${*}"
-#        RC="$?"
+        RC="$?"
     else
         if [ -n "opt_debug" ]; then
             print_log debug "Executing command: $*"
         fi
 
-#        ret_stdout=''
         ret_stderr=''
 
-#        TMP=$(mktemp)
-#   TMPOUT=$(mktemp)
-    TMPERR=$(mktemp)
-#        ret_stdout=$( eval $* 2> "$TMP")
+        TMPERR=$(mktemp)
         eval $* 2> "$TMPERR"
-#        eval $* 2> "$TMPERR" | tee "$TMPOUT"
-#        ret_stderr=$(cat "$TMP")
-#        ret_stdout=$(cat "$TMPOUT")
+        RC="$?"
         ret_stderr=$(cat "$TMPERR")
-#        rm "$TMP"
         rm "$TMPERR"
-#        RC=ret_stdout
 
-#        print_log debug "Command stdout: $ret_stdout"
-#        print_log debug "Command stderr: $ret_stderr"
-
-        if [ -n "$ret_stderr" ]; then
-            print_log warning "$* returned stderr: $ret_stderr"
+        if [ "$RC" -eq '0' ]; then
+            print_log warning "$* returned $RC, stderr: $ret_stderr"
         fi
     fi
+    return $RC
 }
 
 do_rsync ()
 {
 print_log info "Start rsyncing"
 if [ -n "$opt_verbose" ]; then
-#    do_run "rsync -av --progress --delete --one-file-system ${rsync_exclude} / ${FOLDER_RSYNC}"
-#    do_run "rsync -av --progress --delete ${rsync_exclude} / ${FOLDER_RSYNC}"
     do_run "rsync -av --progress --delete ${rsync_onefs} ${rsync_exclude} / ${FOLDER_RSYNC}"
-elif [ -n "$opt_quiet" ]
-then
-#    do_run "rsync -aq --progress --delete --one-file-system ${rsync_exclude} / ${FOLDER_RSYNC}"
-#    do_run "rsync -aq --progress --delete ${rsync_exclude} / ${FOLDER_RSYNC}"
+elif [ -n "$opt_quiet" ]; then
     do_run "rsync -aq --progress --delete ${rsync_onefs} ${rsync_exclude} / ${FOLDER_RSYNC}"
 else
-#    do_run "rsync -a --progress --delete --one-file-system ${rsync_exclude} / ${FOLDER_RSYNC} | sed '0,/^$/d'"
-#    do_run "rsync -a --progress --delete ${rsync_exclude} / ${FOLDER_RSYNC} | sed '0,/^$/d'"
     do_run "rsync -a --progress --delete ${rsync_onefs} ${rsync_exclude} / ${FOLDER_RSYNC} | sed '0,/^$/d'"
 fi
+
 if [ "$?" -ne 0 ]
 then
     exit $?
@@ -343,12 +326,10 @@ if [ -n "$opt_auto" ]; then
     DOM=$(date +%d)
     DOW=$(date +%w)
 
-    if [ "$DOM" -eq 3 ]
-    then
+    if [ "$DOM" -eq 3 ]; then
             opt_label='monthly'
             opt_keep=''
-    elif [ "$DOW" -eq 6 ]
-    then
+    elif [ "$DOW" -eq 6 ]; then
             opt_label='weekly'
             opt_keep='4'
     else
@@ -370,74 +351,78 @@ if [ -z "$opt_backup_folder" ]; then
 fi
 print_log debug "Using backup folder: $opt_backup_folder"
 
-# Prepare folder for rsyncing
-print_log debug "Prepare folder for newest rsync"
-FOLDER_RSYNC="${opt_backup_folder}/${opt_prefix}"
-print_log debug "Backup folder: $FOLDER_RSYNC"
+if [ -z "$opt_no_rsync" ]; then
+    # Prepare folder for rsyncing
+    print_log debug "Prepare folder for newest rsync"
+    FOLDER_RSYNC="${opt_backup_folder}/${opt_prefix}"
+    print_log debug "Backup folder: $FOLDER_RSYNC"
 
-do_run "mkdir -p $FOLDER_RSYNC"
-if [ "$?" -ne 0 ]; then
-    exit $?
-fi
+    do_run "mkdir -p $FOLDER_RSYNC"
+    if [ "$?" -ne 0 ]; then
+        exit $?
+    fi
 
-# Create exclude
-#rsync_exclude="--exclude ${opt_backup_folder} --exclude /proc --exclude /dev --exclude /sys --exclude /run"
-rsync_exclude="$rsync_exclude --exclude ${opt_backup_folder}"
-for ii in $opt_exclude
-do
-    rsync_exclude="$rsync_exclude --exclude ${ii}"
-done
-print_log debug "rsync_exclude: $rsync_exclude"
+    # Create exclude
+    rsync_exclude="$rsync_exclude --exclude ${opt_backup_folder}"
+    for ii in $opt_exclude
+    do
+        rsync_exclude="$rsync_exclude --exclude ${ii}"
+    done
+    print_log debug "rsync_exclude: $rsync_exclude"
 
-# One filesystem
-if [ -n "$opt_onefilesystem" ]; then
-    rsync_onefs="--one-file-system"
-    print_log debug "Do not cross filesystem boundaries."
+    # One filesystem
+    if [ -n "$opt_onefilesystem" ]; then
+        rsync_onefs="--one-file-system"
+        print_log debug "Do not cross filesystem boundaries."
+    else
+        rsync_onefs=''
+    fi
+
+    # Proceed rsync
+    do_rsync
 else
-    rsync_onefs=''
+    print_log debug "Skipping rsync."
 fi
 
-# Proceed rsync
-do_rsync
+if [ -z "$opt_no_tar" ]; then
+    # Prepare tarball file name
+    print_log debug "Prepare tarball file name"
+    if [ -n "$opt_label" ]; then
+        TARFILE="${opt_backup_folder}/${opt_prefix}${opt_sep}${opt_label}${opt_sep}${DATE}.tgz"
+    else
+        TARFILE="${opt_backup_folder}/${opt_prefix}${opt_sep}${DATE}.tgz"
+    fi
+    print_log debug "Tar file: $TARFILE"
 
-# Prepare tarball file name
-print_log debug "Prepare tarball file name"
-if [ -n "$opt_label" ]; then
-    TARFILE="${opt_backup_folder}/${opt_prefix}${opt_sep}${opt_label}${opt_sep}${DATE}.tgz"
-else
-    TARFILE="${opt_backup_folder}/${opt_prefix}${opt_sep}${DATE}.tgz"
-fi
-print_log debug "Tar file: $TARFILE"
-
-# Proceed tar
-if [ -n "$opt_no_tar" ]; then
+    # Proceed tar
     do_tar
-fi
 
-# Find and delete too old tars
-if [ -n "$opt_keep" ] && [ "$opt_keep" -gt 0 ]; then
-    print_log debug "Deleting old backups."
-    do_delete
-fi
+    # Find and delete too old tars
+    if [ -n "$opt_keep" ] && [ "$opt_keep" -gt 0 ]; then
+        print_log debug "Deleting old backups."
+        do_delete
+    fi
 
-if [ -n "$opt_label" ]; then
-    BACKUPNAME="${opt_prefix}${opt_sep}${opt_label}${opt_sep}${DATE}.tgz"
+    if [ -n "$opt_label" ]; then
+        BACKUPNAME="${opt_prefix}${opt_sep}${opt_label}${opt_sep}${DATE}.tgz"
+    else
+        BACKUPNAME="${opt_prefix}${opt_sep}${DATE}.tgz"
+    fi
+
+    # Write last filename into file
+    print_log debug "Write last filename into file"
+
+    LASTFILE="${opt_backup_folder}/${opt_prefix}.latest"
+    print_log debug "Last file name: ${LASTFILE}"
+
+    do_run "echo ${TARFILE} > ${LASTFILE}"
+
+    # Summary
+    print_log notice "$BACKUPNAME: $CREATION_COUNT created, $DESTRUCTION_COUNT destroyed, $WARNING_COUNT warnings."
 else
-    BACKUPNAME="${opt_prefix}${opt_sep}${DATE}.tgz"
+    print_log debug "Skipping tar."
 fi
-
-# Write last filename into file
-print_log debug "Write last filename into file"
-
-LASTFILE="${opt_backup_folder}/${opt_prefix}.latest"
-print_log debug "Last file name: ${LASTFILE}"
-
-do_run "echo ${TARFILE} > ${LASTFILE}"
-
-# Summary
-print_log notice "$BACKUPNAME: $CREATION_COUNT created, $DESTRUCTION_COUNT destroyed, $WARNING_COUNT warnings."
 
 print_log info "End program."
-
 exit 0
 # }
