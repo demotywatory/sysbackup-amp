@@ -5,7 +5,6 @@ IFS="
 "
 
 # Set default program options.
-opt_opt_error=0
 opt_debug=''
 opt_quiet=''
 opt_verbose=''
@@ -35,6 +34,7 @@ DESTRUCTION_COUNT='0'
 
 get_options () # [argv]
 {
+opt_opt_error=0
 GETOPT=$(getopt \
   --longoptions=debug,help,quiet,dry-run,syslog,verbose,label:,keep:,exclude:,folder:,auto,multi,multithreaded,one-file-system,no-tar,no-rsync \
   --options=dhqnsvl:k:x:f:am1tr \
@@ -214,7 +214,7 @@ do_run () # [argv]
         ret_stderr=$(cat "$TMPERR")
         rm "$TMPERR"
 
-        if [ "$RC" -eq '0' ]; then
+        if [ "$RC" -ne '0' ]; then
             print_log warning "$* returned $RC, stderr: $ret_stderr"
         fi
     fi
@@ -242,13 +242,13 @@ do_tar ()
 {
 print_log info "Start taring"
 print_log debug "Start taring"
+# Tar prints all informations to stderr and we redirect them to stdout.
 if [ -n "$opt_verbose" ]; then
     if [ -n "$opt_mutithreaded" ]; then
         do_run "tar -cpv -I pigz --totals -f $TARFILE -C ${FOLDER_RSYNC} . 2>&1"
     else
         do_run "tar -cpvz --totals -f $TARFILE -C ${FOLDER_RSYNC} . 2>&1"
     fi
-
 else
     if [ -n "$opt_mutithreaded" ]; then
         do_run "tar -cp -I pigz -f $TARFILE -C ${FOLDER_RSYNC} . 2>&1"
