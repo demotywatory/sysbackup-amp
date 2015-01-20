@@ -16,7 +16,8 @@ Every day it will make daily archive. Only 31 latest will be kept.
 Notice that making monthly archive, it will not make weekly and daily. The same effect with weekly.
 After archiving, full path to latest archive is stored in file 'sysbackup.latest'
 
-Normally backup folder is excluded from backup. User can specify additional folders.
+Normally backup folder is excluded from backup (as well as /dev /proc /run /sys /tmp).
+User can specify additional excluded folders.
 
 See manpage sysbackup-amp(8) for more information.
 
