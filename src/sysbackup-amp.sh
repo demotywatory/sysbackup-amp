@@ -25,7 +25,7 @@ opt_no_rsync=''
 ret_stdout=''
 ret_stderr=''
 
-rsync_exclude="--exclude /dev --exclude /proc --exclude /run --exclude /sys --exclude /tmp"
+rsync_exclude="--exclude /dev/ --exclude /proc/ --exclude /run/ --exclude /sys/ --exclude /tmp/"
 rsync_onefs=''
 
 CREATION_COUNT='0'
