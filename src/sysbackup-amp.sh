@@ -115,7 +115,7 @@ $2"
             opt_mutithreaded="1"
             shift 1
             ;;
-        (-1|--one-fil-esystem)
+        (-1|--one-file-system)
             opt_onefilesystem='1'
             shift 1
             ;;
@@ -138,17 +138,21 @@ done
 print_usage ()
 {
     echo "Usage: $0 [options]
-  -d, --debug        Print debugging messages.
-  -h, --help         Print this usage message.
-  -q, --quiet        Suppress warnings and notices at the console.
-  -n, --dry-run      Print actions without actually doing anything.
-  -s, --syslog       Write messages into the system log.
-  -v, --verbose      Print info messages.
-  -l, --label=LAB    LAB is usually 'hourly', 'daily', or 'monthly'.
-  -k, --keep=NUM     Keep NUM recent backups and destroy older backups.
-  -x, --exclude=EX   Exclude folder from syncing. For multiple folders use multiple times.
-  -a, --auto         Automatically set 'label' and 'keep'
-  -m, --multi        Use pigz - Parallel Implementation of GZip.
+  -d, --debug         Print debugging messages.
+  -h, --help          Print this usage message.
+  -q, --quiet         Suppress warnings and notices at the console.
+  -n, --dry-run       Print actions without actually doing anything.
+  -s, --syslog        Write messages into the system log.
+  -v, --verbose       Print info messages.
+  -l, --label=LAB     LAB is usually 'hourly', 'daily', or 'monthly'.
+  -k, --keep=NUM      Keep NUM recent backups and destroy older backups.
+  -x, --exclude=EX    Exclude folder from syncing. For multiple folders use multiple times.
+  -a, --auto          Automatically set 'label' and 'keep'
+  -m, --multi         Use pigz - Parallel Implementation of GZip.
+      --multithreaded Same as --multi.
+  -1, --one-file-system Do not cross filesystem boundary. Option passed to rsync.
+  -r, --no-rsync      Do not run rsync.
+  -t, --no-tar        Do not run tar.
 "
 }
 
